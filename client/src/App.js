@@ -1,18 +1,38 @@
 import './App.css';
 import './normal.css';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 function App() {
+  
+  // run once when app loads
+  useEffect(() => {
+    getEngines();
+  }, []);
+
   // Initialize the chatLog state as an empty array
-  const [chatLog, setChatLog] = useState([]);
   const [input, setInput] = useState("");
+  const [models, setModels] = useState([]);
+  const [currentModel, setCurrentModel] = useState("ada");
+  const [chatLog, setChatLog] = useState([]);
+
+  // clear the chatLog
+  const clearChat = () => {
+    setChatLog([]);
+  };
+
+  // fetch models
+  const getEngines = () => {
+    fetch("http://localhost:8080/models")
+    .then(res => res.json())
+    .then(data => setModels(data.models.data))
+  };
 
   // Function to handle input submission
   async function handleSubmit(e) {
     e.preventDefault();
     // Add the input to the chatLog state
-    setChatLog([...chatLog, { user: "me", message: `${input}` }]);
+    await setChatLog([...chatLog, { user: "me", message: `${input}` }]);
     // send the message to the API
     const response = await fetch("http://localhost:8080/", {
       method: "POST",
@@ -20,22 +40,32 @@ function App() {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({ 
-        message: input
+        message: input,
+        currentModel,
       })
     });
 
     const data = await response.json();
-    setChatLog([...chatLog, { user: "me", message: `${input}` }, {user: 'chatgpt', message: `${data.message}`}]);
+    await setChatLog([...chatLog, { user: "me", message: `${input}` }, {user: 'chatgpt', message: `${data.message}`}]);
     //clear input 
-    setInput("");
+    await setInput("");
   }
 
   return (
     <div className="App">
       <aside className="side-menu">
-        <div className="side-menu-button">
+        <div className="side-menu-button" onClick={clearChat}>
           <span>+</span>
           New Chat
+        </div>
+        <div className='models'>
+          <select onChange={(e) => {
+            setCurrentModel(e.target.value)
+          }}>
+            {models.map((model, index) => (
+              <option key={model.id} value={model.id}>{model.id}</option>
+            ))}{models}
+          </select>
         </div>
       </aside>
       <section className="chatbox">

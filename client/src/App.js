@@ -1,10 +1,9 @@
-import './App.css';
-import './normal.css';
+import "./App.css";
+import "./normal.css";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 
 function App() {
-  
   // run once when app loads
   useEffect(() => {
     getEngines();
@@ -12,8 +11,8 @@ function App() {
 
   // Initialize the chatLog state as an empty array
   const [input, setInput] = useState("");
-  const [models, setModels] = useState([]);
-  const [currentModel, setCurrentModel] = useState("ada");
+  const [models, setModels] = useState(null);
+  const [currentModel, setCurrentModel] = useState("");
   const [chatLog, setChatLog] = useState([]);
 
   // clear the chatLog
@@ -24,8 +23,11 @@ function App() {
   // fetch models
   const getEngines = () => {
     fetch("http://localhost:8080/models")
-    .then(res => res.json())
-    .then(data => setModels(data.models.data))
+      .then((res) => res.json())
+      .then((data) => {
+        setModels(data.models);
+        setCurrentModel(data.models[0].id);
+      });
   };
 
   // Function to handle input submission
@@ -37,17 +39,21 @@ function App() {
     const response = await fetch("http://localhost:8080/", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         message: input,
         currentModel,
-      })
+      }),
     });
 
     const data = await response.json();
-    await setChatLog([...chatLog, { user: "me", message: `${input}` }, {user: 'chatgpt', message: `${data.message}`}]);
-    //clear input 
+    await setChatLog([
+      ...chatLog,
+      { user: "me", message: `${input}` },
+      { user: "chatgpt", message: `${data.message}` },
+    ]);
+    //clear input
     await setInput("");
   }
 
@@ -58,13 +64,23 @@ function App() {
           <span>+</span>
           New Chat
         </div>
-        <div className='models'>
-          <select onChange={(e) => {
-            setCurrentModel(e.target.value)
-          }}>
-            {models.map((model, index) => (
-              <option key={model.id} value={model.id}>{model.id}</option>
-            ))}{models}
+
+        <div className="models">
+          <select
+            onChange={(e) => {
+              setCurrentModel(e.target.value);
+            }}
+            value={currentModel}
+          >
+            {models !== null && (
+              <>
+                {models.map((model, index) => (
+                  <option key={index} value={model.id}>
+                    {model.id}
+                  </option>
+                ))}
+              </>
+            )}
           </select>
         </div>
       </aside>
@@ -92,18 +108,21 @@ function App() {
 
 const ChatMessage = ({ message }) => {
   return (
-    <div className={`chat-message ${message.user === "chatgpt" ? "chatgpt" : "me"}`}>
+    <div
+      className={`chat-message ${
+        message.user === "chatgpt" ? "chatgpt" : "me"
+      }`}
+    >
       <div className="chat-message-center">
-        <div className={`avatar ${message.user === "chatgpt" ? "chatgpt" : "me"}`}>
-          </div>
-          <div className="message">
-
+        <div
+          className={`avatar ${message.user === "chatgpt" ? "chatgpt" : "me"}`}
+        ></div>
+        <div className="message">
           <p>{message.message}</p>
         </div>
       </div>
     </div>
   );
-}
-
+};
 
 export default App;

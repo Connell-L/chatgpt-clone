@@ -16,7 +16,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const port = 8080;
+const port = process.env.PORT || 8080;
 
 app.post('/', async (req, res) => {
   const { message, currentModel } = req.body;
@@ -32,7 +32,7 @@ app.post('/', async (req, res) => {
 });
 
 app.get('/models', async (req, res) => {
-  const getModels = await openai.listEngines({});
+  const getModels = await openai.listModels({});
   res.json({
     models: getModels.data.data
   });

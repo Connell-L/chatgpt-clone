@@ -1,13 +1,11 @@
 import "./App.css";
 import "./normal.css";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 function App() {
-  // run once when app loads
-  useEffect(() => {
-    getEngines();
-  }, []);
+  
+  const port = process.env.PORT || 8080;
 
   // Initialize the chatLog state as an empty array
   const [input, setInput] = useState("");
@@ -21,14 +19,19 @@ function App() {
   };
 
   // fetch models
-  const getEngines = () => {
-    fetch("http://localhost:8080/models")
+  const getEngines = useCallback(() => {
+    fetch(`http://localhost:${port}/models`)
       .then((res) => res.json())
       .then((data) => {
         setModels(data.models);
         setCurrentModel(data.models[0].id);
       });
-  };
+  }, [port]);
+
+useEffect(() => {
+    getEngines();
+  }, [getEngines]);
+
 
   // Function to handle input submission
   async function handleSubmit(e) {
@@ -36,7 +39,7 @@ function App() {
     // Add the input to the chatLog state
     await setChatLog([...chatLog, { user: "me", message: `${input}` }]);
     // send the message to the API
-    const response = await fetch("http://localhost:8080/", {
+    const response = await fetch(`http://localhost:${port}/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

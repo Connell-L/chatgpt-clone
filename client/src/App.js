@@ -1,6 +1,7 @@
 import "./App.css";
 import "./normal.css";
 
+import axios from "axios";
 import React, { useCallback, useEffect, useState } from "react";
 
 function App() {
@@ -17,51 +18,48 @@ function App() {
   const clearChat = () => {
     setChatLog([]);
   };
-
+  
   // fetch models
   const getEngines = useCallback(() => {
-    fetch(`http://localhost:${port}/models`)
-      .then((res) => res.json())
-      .then((data) => {
-        setModels(data.models);
-        setCurrentModel(data.models[0].id);
-      });
-  }, [port]);
-
-useEffect(() => {
-    getEngines();
-  }, [getEngines]);
-
-
+      axios.get(`http://localhost:${port}/models`)
+      .then(({ data }) => {
+          setModels(data.models);
+          setCurrentModel(data.models[0].id);
+        });
+    }, [port]);
+  
+  // ...
+  
   // Function to handle input submission
   async function handleSubmit(e) {
     e.preventDefault();
     // Add the input to the chatLog state
     await setChatLog([...chatLog, { user: "me", message: `${input}` }]);
     // send the message to the API
-    const response = await fetch(`http://localhost:${port}/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        message: input,
-        currentModel,
-      }),
-    });
-
-    const data = await response.json();
-    await setChatLog([
-      ...chatLog,
-      { user: "me", message: `${input}` },
-      { user: "chatgpt", message: `${data.message}` },
-    ]);
-    //clear input
-    await setInput("");
-  }
-
-  return (
-    <div className="App">
+    try {
+          const { data } = await axios.post(`http://localhost:${port}/`, {
+              message: input,
+              currentModel,
+            });
+          await setChatLog([
+              ...chatLog,
+              { user: "me", message: `${input}` },
+              { user: "chatgpt", message: `${data.message}` },
+            ]);
+          } catch(error) {
+          console.log(error);
+        }
+        //clear input
+        await setInput("");
+      }
+      
+  
+      useEffect(() => {
+          getEngines();
+        }, [getEngines]);
+      
+      return (
+        <div className="App">
       <aside className="side-menu">
         <div className="side-menu-button" onClick={clearChat}>
           <span>+</span>

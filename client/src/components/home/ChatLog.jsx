@@ -1,9 +1,16 @@
 import axios from "axios";
-import React, { useCallback, useEffect, useState } from "react";
-import { Box, Input } from "@mui/material";
-import NewChatButton from "./NewChatButton";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Box,
+  Button,
+  Divider,
+  Input,
+  Menu,
+  MenuItem,
+  styled,
+} from "@mui/material";
 
-const ChatMessage = ({ message }) => {
+export const ChatMessage = ({ message }) => {
   return (
     <Box
       data-testid="chat-message-container"
@@ -24,7 +31,17 @@ const ChatMessage = ({ message }) => {
   );
 };
 
-const ChatLog = () => {
+const transformOrigin = {
+  vertical: "top",
+  horizontal: "center",
+};
+
+const anchorOrigin = {
+  vertical: "bottom",
+  horizontal: "center",
+};
+
+export const ChatLog = () => {
   const port = process.env.PORT || 8080;
 
   // Initialize the chatLog state as an empty array
@@ -32,6 +49,8 @@ const ChatLog = () => {
   const [models, setModels] = useState(null);
   const [currentModel, setCurrentModel] = useState("");
   const [chatLog, setChatLog] = useState([]);
+  const [open, setOpen] = useState(false);
+  const anchorRef = useRef(null);
 
   // clear the chatLog
   const clearChat = () => {
@@ -73,6 +92,39 @@ const ChatLog = () => {
     getEngines();
   }, [getEngines]);
 
+  const handleToggle = useCallback(() => {
+    setOpen((prevOpen) => !prevOpen);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    setOpen(false);
+    console.log(`handleClose, current model: ${currentModel}`);
+  }, [currentModel]);
+
+  const menuItems = [];
+
+  const StyledMenuItem = styled(MenuItem)({
+    paddingLeft: 16,
+    "&:hover": {
+      color: "white",
+      backgroundColor: "#f73b3b",
+    },
+  });
+
+  function modelItems() {
+    if (models !== null) {
+      return models.forEach((model) => {
+        menuItems.push(
+          <StyledMenuItem key={model.id} value={model.id}>
+            {model.id}
+          </StyledMenuItem>
+        );
+      });
+    }
+  }
+
+  modelItems();
+
   return (
     <>
       <Box
@@ -88,44 +140,94 @@ const ChatLog = () => {
       >
         <Box
           data-testid="side-drawer"
-          sx={{ border: "1px solid red", width: "260px", padding: "10px" }}
+          sx={{
+            width: "260px",
+            padding: "10px",
+          }}
         >
-          <NewChatButton
-            data-testid="new-chat-button"
-            onClick={clearChat}
-            sx={{
-              padding: "12px",
-              border: "1px solid white",
-              borderRadius: "5px",
-              textAlign: "left",
-              transition: "ease 0.25s all",
-            }}
-          >
-            New Chat
-          </NewChatButton>
-          <div className="models">
-            <select
-              onChange={(e) => {
-                setCurrentModel(e.target.value);
-              }}
-              value={currentModel}
-            >
-              {models !== null && (
-                <>
-                  {models.map((model, index) => (
-                    <option key={index} value={model.id}>
-                      {model.id}
-                    </option>
-                  ))}
-                </>
-              )}
-            </select>
-          </div>
+          <Box data-testid="buttons-container">
+            <div>
+              <Button
+                data-testid="new-chat-button"
+                onClick={clearChat}
+                size="large"
+                variant="outlined"
+                sx={{
+                  padding: "12px",
+                  border: "1px solid white",
+                  borderRadius: "5px",
+                  textAlign: "left",
+                  transition: "ease 0.25s all",
+                  color: "white",
+                  marginTop: "16px",
+                  minWidth: "80%",
+                }}
+              >
+                New Chat
+              </Button>
+            </div>
+            <div>
+              <Button
+                data-testid="model-button"
+                onClick={handleToggle}
+                variant="outlined"
+                ref={anchorRef}
+                value={currentModel}
+                aria-label={`Click to ${open ? "open" : "close"}  models menu`}
+                aria-controls={open ? "models-select" : undefined}
+                aria-haspopup="true"
+                placeholder="Select a model"
+                size="large"
+                sx={{
+                  padding: "12px",
+                  border: "1px solid white",
+                  borderRadius: "5px",
+                  textAlign: "left",
+                  transition: "ease 0.25s all",
+                  color: "white",
+                  marginTop: "10px",
+                  backgroundColor: "primary",
+                  minWidth: "80%",
+                }}
+              >
+                {currentModel}
+              </Button>
+              <Menu
+                id="models-select"
+                anchorEl={anchorRef.current}
+                variant="menu"
+                transformOrigin={transformOrigin}
+                anchorOrigin={anchorOrigin}
+                value={currentModel}
+                onClose={handleClose}
+                onChange={(e) => {
+                  setCurrentModel(e.target.value);
+                }}
+                open={open}
+                onClick={handleToggle}
+                sx={{
+                  maxWidth: "260px",
+                  maxHeight: "50%",
+                }}
+                PaperProps={{
+                  style: {
+                    marginTop: "4px",
+                    borderRadius: "16px",
+                  },
+                }}
+              >
+                <StyledMenuItem disabled sx={{ color: "#f73b3b" }}>
+                  Select a model.
+                </StyledMenuItem>
+                <Divider variant="middle" />
+                {menuItems}
+              </Menu>
+            </div>
+          </Box>
         </Box>
         <Box
           data-testid="chat-log-container"
           sx={{
-            border: "1px solid green",
             flex: 1,
             backgroundColor: "#343541",
             position: "relative",
@@ -174,5 +276,3 @@ const ChatLog = () => {
     </>
   );
 };
-
-export default ChatLog;

@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import ChatLog from "./components/home/ChatLog";
+import {ChatLog} from "./components/home/ChatLog";
 
 function App() {
   

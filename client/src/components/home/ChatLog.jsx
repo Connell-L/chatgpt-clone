@@ -1,12 +1,17 @@
 import axios from "axios";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import SendIcon from "@mui/icons-material/Send";
 import {
   Box,
   Button,
   Divider,
-  Input,
+  FormControl,
+  IconButton,
+  InputAdornment,
+  InputLabel,
   Menu,
   MenuItem,
+  OutlinedInput,
   styled,
 } from "@mui/material";
 
@@ -18,11 +23,27 @@ export const ChatMessage = ({ message }) => {
         message.user === "chatgpt" ? "chatgpt" : "me"
       }`}
     >
-      <Box className="chat-message-center">
+      <Box
+        className="chat-message-center"
+        sx={{
+          display: "flex",
+          padding: 1,
+          paddingLeft: 2,
+          paddingRight: 2,
+          alignItems: "center",
+        }}
+      >
         <Box
           data-testid="avatar"
+          sx={{ paddingRight: 2 }}
           className={`avatar ${message.user === "chatgpt" ? "chatgpt" : "me"}`}
-        ></Box>
+        >
+          {message.user === "me" ? (
+            <SendIcon />
+          ) : (
+            <SendIcon sx={{ color: "#f73b3b" }} />
+          )}
+        </Box>
         <Box data-testid="chat-message" className="message">
           <p>{message.message}</p>
         </Box>
@@ -250,26 +271,50 @@ export const ChatLog = () => {
               right: 0,
             }}
           >
-            <form onSubmit={handleSubmit}>
-              <Input
+            <FormControl fullWidth onSubmit={handleSubmit} sx={{ m: 1 }}>
+              <InputLabel htmlFor="chat-input" />
+              <OutlinedInput
                 value={input}
+                id="chat-input"
+                data-testid="chat-input"
                 placeholder="Type your message here"
                 rows={1}
                 onChange={(e) => setInput(e.target.value)}
-                data-testid="chat-input"
+                onKeyPress={(e) => {
+                  if (e.key === "Enter") {
+                    handleSubmit();
+                  }
+                }}
+                endAdornment={
+                  <InputAdornment position="end">
+                    <IconButton>
+                      <SendIcon
+                        aria-label="toggle password visibility"
+                        onClick={handleSubmit}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                        }}
+                        edge="end"
+                        sx={{
+                          color: "white",
+                          backgroundColor: "#f73b3b",
+                          borderRadius: "5px",
+                          padding: "5px",
+                        }}
+                      />
+                    </IconButton>
+                  </InputAdornment>
+                }
                 sx={{
                   backgroundColor: "#40414f",
-                  width: "100%",
                   borderRadius: "5px",
                   borderColor: "none",
                   border: "none",
-                  outline: "none",
-                  fontSize: "1.25em",
-                  boxShadow: "0 0 8px 0 rgba(0, 0, 0, 0, 0.25)",
                   color: "white",
+                  padding: "5px",
                 }}
               />
-            </form>
+            </FormControl>
           </Box>
         </Box>
       </Box>
